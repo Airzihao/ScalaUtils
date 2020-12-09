@@ -9,10 +9,10 @@ import scala.io.Source
  * @Modified By:
  */
 object DataWrapper {
-  val srcNodeFile: File = new File("D:\\PySpace\\PyUtils\\src\\Graph\\nodes-1B.csv")
-  val tarNodeFile: File = new File("G:\\dataset\\nodes-1B-wrapped.csv")
-  val srcEdgeFile: File = new File("D:\\PySpace\\PyUtils\\src\\Graph\\edges-1B.csv")
-  val tarEdgeFile: File = new File("G:\\dataset\\edges-1B-wrapped.csv")
+  var srcNodeFile: File = new File("D:\\PySpace\\PyUtils\\src\\Graph\\nodes-1B.csv")
+  var tarNodeFile: File = new File("G:\\dataset\\nodes-1B-wrapped.csv")
+  var srcEdgeFile: File = new File("D:\\PySpace\\PyUtils\\src\\Graph\\edges-1B.csv")
+  var tarEdgeFile: File = new File("G:\\dataset\\edges-1B-wrapped.csv")
 
   def wrapNode(nodeId: Long): String = {
     val label: String = s"label${nodeId%10}"
@@ -47,7 +47,7 @@ object DataWrapper {
     val toIdStr = toId.toString
     val edgeType: String = s"type${fromId%10}"
     val weight: Int = (fromId%10).toInt
-    s"$fromId,$toId,$fromId_p,$toIdStr,$edgeType,$weight"
+    s"$edgeId,$fromId,$toId,$edgeType,$fromId_p,$toIdStr,$weight"
   }
 
   def wrapAllNodes(): Unit = {
@@ -82,6 +82,10 @@ object DataWrapper {
   }
 
   def main(args: Array[String]): Unit = {
+    srcNodeFile = new File("")
+    srcEdgeFile = new File("")
+    tarNodeFile = new File("")
+    tarEdgeFile = new File("")
     wrapAllNodes()
     wrapAllEdges()
   }
