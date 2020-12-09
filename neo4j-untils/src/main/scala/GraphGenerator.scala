@@ -42,8 +42,15 @@ object GraphGenerator {
   }
 
   def main(args: Array[String]): Unit = {
-    generateNodes(new File("./nodes.csv"), 100)
-    generateEdges(new File("./edges.csv"), 100)
+    /*
+    1. !!!!!!Set the path to a disk has more than 100GB available space!!!
+    2. modify the nodeCount arg.
+    3. node: 1,2,3,4,5,6
+    4. edge: 1->2, 1->3, 2->3, 2->4, 3->4, 3->5 ...  two edges from a node.
+     */
+    val nodeCount: Int = 0
+    generateNodes(new File("./nodes.csv"), nodeCount)
+    generateEdges(new File("./edges.csv"), nodeCount)
   }
 
 }
