@@ -10,28 +10,32 @@ object GraphGenerator {
   var tarNodeFile: File = new File("")
   var tarEdgeFile: File = new File("")
 
-  def generateNodes(tarNodeFile: File, count: Int): Unit = {
+  def generateNodes(tarNodeFile: File, nodeCount: Int): Unit = {
     val bos = new BufferedOutputStream(new FileOutputStream(tarNodeFile))
-    for(i<-1 to count) {
-      if(i%10000000 == 0) {
+    var count = 0
+    for(i<-1 to nodeCount) {
+      if(count%10000000 == 0) {
         bos.flush()
-        println(s"${i/10000000}% nodes generated.")
+        println(s"${count/10000000}% nodes generated.")
       }
       bos.write((s"$i\n").getBytes)
+      count += 1
     }
     bos.flush()
   }
   def generateEdges(tarEdgeFile: File, nodeCount: Int): Unit = {
     val bos = new BufferedOutputStream(new FileOutputStream(tarEdgeFile))
+    var count = 0
     for (i <-1 to nodeCount-2) {
-      if(i%10000000 == 0) {
+      if(count%10000000 == 0) {
         bos.flush()
-        println(s"${i/10000000}% edges generated.")
+        println(s"${count/10000000}% edges generated.")
       }
       val edge1 = s"$i,${i+1}\n"
       val edge2 = s"$i,${i+2}\n"
       bos.write(edge1.getBytes)
       bos.write(edge2.getBytes)
+      count += 1
     }
     bos.flush()
 
