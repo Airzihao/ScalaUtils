@@ -19,37 +19,50 @@ import scala.collection.mutable;
 trait Serializer {
   def map2BytesArr(props: Map[String, Any]): Array[Byte];
   def bytesArr2Map(byteArr: Array[Byte]): Map[String, Any];
-
 }
 
 class KyroSerializer extends Serializer {
   val kryo: Kryo = new Kryo()
   kryo.setReferences(false);
   kryo.setRegistrationRequired(false);
-//  kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+  kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
   val prop = Map(""->"").asJava
 //  kryo.register(prop.asJava.getClass, new JavaSerializer)
   kryo.setRegistrationRequired(false)
-  kryo.register(classOf[java.util.Map], new MapSerializer)
+  kryo.register(classOf[Array[Any]])
+//  kryo.register(classOf[java.util.Map[String, Any]], new MapSerializer)
 //  kryo.register(classOf[NodeValue])
 
   override def map2BytesArr(props: Map[String, Any]): Array[Byte] = {
-    val arr: Array[Any] = Array()
+//    val arr: Array[Any] = Array()
     val map = props.asJava
     val bos = new ByteArrayOutputStream()
     val output: Output = new Output(bos)
-    val nodeValue = new NodeValue(1,Array(1), props)
-    kryo.writeObject(output, nodeValue)
+    val arr: Array[Any] = Array(1, "sss", "sdadasd a", false)
+    kryo.writeObject(output, arr)
     output.flush();
     output.close();
     bos.toByteArray
   }
 
-  override def bytesArr2Map(byteArr: Array[Byte]): Map[String, Any] = {
+  def str2BytesArr(str: String): Array[Byte] = {
+    val bos = new ByteArrayOutputStream()
+    val output: Output = new Output(bos)
+    kryo.writeObject(output, str)
+    bos.toByteArray
+  }
+  def bytesArr2Str(byteArr: Array[Byte]): String = {
     val bis = new ByteArrayInputStream(byteArr)
     val input: Input = new Input(bis)
+    val a = kryo.readClassAndObject(input)
+    a.toString
+  }
+
+  override def bytesArr2Map(byteArr: Array[Byte]): Map[String, Any] = {
 //    val a = kryo.readClassAndObject(input)
-    val a = kryo.readObject(input, classOf[NodeValue])
+    val bis = new ByteArrayInputStream(byteArr)
+    val input: Input = new Input(bis)
+    val a = kryo.readObject(input, classOf[Array[Any]])
     a.asInstanceOf[Map[String, Any]]
   }
 }
@@ -69,8 +82,6 @@ class OriginalSerializer extends Serializer {
     ois.readObject.asInstanceOf[Map[String, Any]]
   }
 }
-
-
 
 class NodeValue(override val id:Long, override val labelIds: Array[Int], override val  properties: Map[String, Any])
   extends StoredNodeWithProperty(id, labelIds, properties ) {
