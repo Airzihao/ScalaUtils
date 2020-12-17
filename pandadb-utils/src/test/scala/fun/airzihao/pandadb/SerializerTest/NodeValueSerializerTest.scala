@@ -11,7 +11,7 @@ import fun.airzihao.pandadb.Utils.timing
  * @Modified By:
  */
 class NodeValueSerializerTest {
-  val nodeValue = new NodeValue(123456, Array(1), Map("a"->1, "aa"->"dasdadadasdadbb", "flag"->true))
+  val nodeValue = new NodeValue(123456, Array(1), Map(1->1, 2->"dasdadadasdadbb", 3->true))
   val nodeValueSerializer = new NodeValueSerializer
 
   @Test

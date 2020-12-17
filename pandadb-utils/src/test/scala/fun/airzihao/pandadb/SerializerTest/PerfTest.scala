@@ -12,7 +12,7 @@ import org.junit.{Assert, Test}
  */
 class PerfTest {
 
-  val nodeValue = new NodeValue(1234567, Array(1), Map("sss"->123, "1"->"qwe", "flag" -> true))
+  val nodeValue = new NodeValue(123456, Array(1), Map(1->1, 2->"dasdadadasdadbb", 3->true))
   val chillSerializer = new ChillSerializer
   val nodeValueSerializer = new NodeValueSerializer
 
@@ -25,14 +25,9 @@ class PerfTest {
 
   @Test
   def testDeserialize(): Unit = {
-    println("deserial")
+    println("deserialize")
     val chillBytes: Array[Byte] = chillSerializer.serialize(nodeValue)
     val nodeBytes: Array[Byte] = nodeValueSerializer.serialize(nodeValue)
-
-    val chillNodeValue = chillSerializer.deserialize(chillBytes, classOf[NodeValue])
-    Assert.assertEquals(nodeValue.id, chillNodeValue.id)
-    Assert.assertArrayEquals(nodeValue.labelIds, chillNodeValue.labelIds)
-    Assert.assertEquals(nodeValue.properties, chillNodeValue.properties)
     timing(_repeatDeserialize(chillSerializer.deserialize(chillBytes, classOf[NodeValue]), 10000000))
     timing(_repeatDeserialize(nodeValueSerializer.deserialize(nodeBytes), 10000000))
   }
