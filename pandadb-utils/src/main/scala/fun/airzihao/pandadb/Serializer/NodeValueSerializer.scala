@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 
 import fun.airzihao.pandadb.PDBMetaData
 import io.netty.buffer.{ByteBuf, ByteBufAllocator}
-import org.junit.{Assert, Test}
 
 /**
  * @Author: Airzihao
@@ -34,7 +33,7 @@ class NodeValueSerializer {
   }
 
   def deserialize(byteArr: Array[Byte]): NodeValue = {
-    val byteBuf = allocator.heapBuffer()
+    val byteBuf = allocator.uffer()
     byteBuf.writeBytes(byteArr)
 
     val id = byteBuf.readLong()
@@ -112,7 +111,7 @@ class NodeValueSerializer {
         case "boolean" => byteBuf.readBoolean()
         case "string" => _readString(byteBuf)
       }
-      (propName -> propValue)
+      propName -> propValue
     }).toMap
     propsMap
   }

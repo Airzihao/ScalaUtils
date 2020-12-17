@@ -14,7 +14,7 @@ class ChillSerializerTest {
   def test() = {
     val nodeValue = new NodeValue(1, Array(1), Map("sss"->123, "1"->"qwe"))
     val bytes = chillSerializer.serialize(nodeValue)
-    val dNodeValue = chillSerializer.deserialize(bytes)
+    val dNodeValue = chillSerializer.deserialize(bytes, classOf[NodeValue])
     println(dNodeValue)
 
   }

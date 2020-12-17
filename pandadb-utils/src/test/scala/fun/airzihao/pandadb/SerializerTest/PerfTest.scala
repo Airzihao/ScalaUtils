@@ -1,6 +1,6 @@
 package fun.airzihao.pandadb.SerializerTest
 
-import fun.airzihao.pandadb.Serializer.{ChillSerializer, NodeValue, OriginalSerializer}
+import fun.airzihao.pandadb.Serializer.{ChillSerializer, NodeValue, NodeValueSerializer}
 import fun.airzihao.pandadb.Utils.timing
 import org.junit.{Assert, Test}
 
@@ -14,29 +14,28 @@ class PerfTest {
 
   val nodeValue = new NodeValue(1234567, Array(1), Map("sss"->123, "1"->"qwe", "flag" -> true))
   val chillSerializer = new ChillSerializer
-  val originalSerializer = new OriginalSerializer
+  val nodeValueSerializer = new NodeValueSerializer
 
   @Test
   def testSerialize(): Unit = {
-    println("serial")
-    timing(_repeatSerialize(chillSerializer.serialize(nodeValue), 1000000))
-    timing(_repeatSerialize(originalSerializer.node2Bytes(nodeValue), 1000000))
+    println("serialize")
+    timing(_repeatSerialize(chillSerializer.serialize(nodeValue), 10000000))
+    timing(_repeatSerialize(nodeValueSerializer.serialize(nodeValue), 10000000))
   }
 
   @Test
   def testDeserialize(): Unit = {
     println("deserial")
     val chillBytes: Array[Byte] = chillSerializer.serialize(nodeValue)
-    val originBytes: Array[Byte] = originalSerializer.node2Bytes(nodeValue)
-    val chillNodeValue = chillSerializer.deserialize(chillBytes)
-    val originNodeValue = originalSerializer.parseFromBytes(originBytes)
-    Assert.assertEquals(chillNodeValue.id, originNodeValue.id)
-    Assert.assertArrayEquals(chillNodeValue.labelIds, originNodeValue.labelIds)
-    Assert.assertEquals(chillNodeValue.properties, originNodeValue.properties)
-    timing(_repeatDeserialize(chillSerializer.deserialize(chillBytes), 1000000))
-    timing(_repeatDeserialize(originalSerializer.parseFromBytes(originBytes), 1000000))
-  }
+    val nodeBytes: Array[Byte] = nodeValueSerializer.serialize(nodeValue)
 
+    val chillNodeValue = chillSerializer.deserialize(chillBytes, classOf[NodeValue])
+    Assert.assertEquals(nodeValue.id, chillNodeValue.id)
+    Assert.assertArrayEquals(nodeValue.labelIds, chillNodeValue.labelIds)
+    Assert.assertEquals(nodeValue.properties, chillNodeValue.properties)
+    timing(_repeatDeserialize(chillSerializer.deserialize(chillBytes, classOf[NodeValue]), 10000000))
+    timing(_repeatDeserialize(nodeValueSerializer.deserialize(nodeBytes), 10000000))
+  }
 
   private def _repeatSerialize[Array[Byte]](f: => Array[Byte], repeatTime: Int) = {
     for (i<-1 to repeatTime) {
@@ -49,5 +48,4 @@ class PerfTest {
       f
     }
   }
-
 }

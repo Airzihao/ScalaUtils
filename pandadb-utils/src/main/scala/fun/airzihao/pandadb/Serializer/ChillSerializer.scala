@@ -16,8 +16,6 @@ class ChillSerializer {
     instantiator.newKryo
   }
 
-//  def serializeNodeValue()
-  // write
   def serialize(obj: Any): Array[Byte] = {
     val bytesArr = new Array[Byte](4096)
     val output = new Output(bytesArr)
@@ -27,15 +25,10 @@ class ChillSerializer {
     bytesArr
   }
 
-  def deserialize(bytesArr: Array[Byte]): NodeValue = {
+  def deserialize[T](bytesArr: Array[Byte], t: Class[T]): T = {
     val input = new Input(bytesArr)
-    kryo.readObject(input, classOf[NodeValue])
+    kryo.readObject(input, t)
   }
-
-//  // read
-//  val input = new Input(buffer)
-//  val data2 = kryo.readObject(input,classOf[NodeValue]).asInstanceOf[NodeValue]
-
 }
 
 
