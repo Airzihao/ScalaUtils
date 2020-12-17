@@ -6,12 +6,12 @@ package fun.airzihao.pandadb.Serializer
  * @Date: Created at 12:29 2020/12/17
  * @Modified By:
  */
-class NodeValue(override val id:Long, override val labelIds: Array[Int], override val  properties: Map[String, Any])
+class NodeValue(override val id:Long, override val labelIds: Array[Int], override val  properties: Map[Int, Any])
   extends StoredNodeWithProperty(id, labelIds, properties ) {
 }
 class StoredNodeWithProperty(override val id: Long,
                              override val labelIds: Array[Int],
-                             val properties:Map[String,Any])
+                             val properties:Map[Int,Any])
   extends StoredNode(id, labelIds){
 }
 case class StoredNode(id: Long, labelIds: Array[Int]=null) {
