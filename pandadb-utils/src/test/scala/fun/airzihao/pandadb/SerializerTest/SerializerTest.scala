@@ -29,7 +29,8 @@ class SerializerTest {
   @Test
   def testMap(): Unit = {
     val bytesArr = serializer.map2Bytes(map)
-    Assert.assertEquals(map, serializer.bytes2Map(bytesArr))
+    val a = serializer.bytes2Map(bytesArr)
+    Assert.assertEquals(map, a)
     println("serialize map.")
     timing(for (i<-1 to 10000000) serializer.map2Bytes(map))
     println("deserialize map.")

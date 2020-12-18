@@ -12,7 +12,7 @@ import org.junit.{Assert, Test}
  */
 class PerfTest {
 
-  val nodeValue = new NodeValue(123456, Array(1), Map(1->1, 2->"dasdadadasdadbb", 3->true))
+  val nodeValue = new NodeValue(123456, Array(1), Map(1->1, 3->true, 2->"sadd"))
   val chillSerializer = new ChillSerializer
   val nodeValueSerializer = new NodeValueSerializer
 

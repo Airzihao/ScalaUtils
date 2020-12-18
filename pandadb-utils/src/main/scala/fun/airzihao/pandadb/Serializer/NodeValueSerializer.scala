@@ -3,7 +3,7 @@ package fun.airzihao.pandadb.Serializer
 import java.io.ByteArrayOutputStream
 
 import fun.airzihao.pandadb.PDBMetaData
-import io.netty.buffer.{ByteBuf, ByteBufAllocator}
+import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 /**
  * @Author: Airzihao
@@ -23,18 +23,14 @@ class NodeValueSerializer extends Serializer {
     _writeLabels(nodeValue.labelIds, byteBuf)
     byteBuf.writeByte(nodeValue.properties.size)
     nodeValue.properties.foreach(kv => _writeProp(kv._1, kv._2, byteBuf))
-    val offset = byteBuf.writerIndex()
-    val bos = new ByteArrayOutputStream()
-    byteBuf.readBytes(bos, offset)
+    val dst = new Array[Byte](byteBuf.writerIndex())
+    byteBuf.readBytes(dst)
     byteBuf.release()
-    bos.toByteArray
+    dst
   }
 
   def deserialize(byteArr: Array[Byte]): NodeValue = {
-    val byteBuf = allocator.buffer()
-    byteBuf.discardReadBytes()
-    byteBuf.writeBytes(byteArr)
-
+    val byteBuf = Unpooled.wrappedBuffer(byteArr)
     val id = byteBuf.readLong()
     val labels: Array[Int] = _readLabels(byteBuf)
     val props: Map[Int, Any] = _readProps(byteBuf)

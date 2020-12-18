@@ -1,8 +1,9 @@
 package fun.airzihao.pandadb.Serializer
 
 import java.io.ByteArrayOutputStream
+
 import fun.airzihao.pandadb.PDBMetaData
-import io.netty.buffer.{ByteBuf, ByteBufAllocator}
+import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 /**
  * @Author: Airzihao
@@ -51,8 +52,8 @@ class Serializer {
   }
 
   def bytes2Map(bytesArr: Array[Byte]): Map[Int, Any] = {
-    val byteBuf: ByteBuf = allocator.buffer()
-    byteBuf.writeBytes(bytesArr)
+    val byteBuf: ByteBuf = Unpooled.wrappedBuffer(bytesArr)
+//    byteBuf.writeBytes(bytesArr)
     val map = _bytes2Map(byteBuf)
     byteBuf.release()
     map
