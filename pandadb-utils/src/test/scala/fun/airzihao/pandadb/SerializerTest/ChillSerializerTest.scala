@@ -1,5 +1,7 @@
+package fun.airzihao.pandadb.SerializerTest
+
 import fun.airzihao.pandadb.Serializer.{ChillSerializer, NodeValue}
-import org.junit.Test
+import org.junit.{Assert, Test}
 
 /**
  * @Author: Airzihao
@@ -8,15 +10,16 @@ import org.junit.Test
  * @Modified By:
  */
 class ChillSerializerTest {
-  val chillSerializer = new ChillSerializer
+  val chillSerializer = ChillSerializer
 
   @Test
   def test() = {
     val nodeValue = new NodeValue(1, Array(1), Map(1->123, 2->"qwe"))
     val bytes = chillSerializer.serialize(nodeValue)
     val dNodeValue = chillSerializer.deserialize(bytes, classOf[NodeValue])
-    println(dNodeValue)
-
+    Assert.assertEquals(nodeValue.id, dNodeValue.id)
+    Assert.assertArrayEquals(nodeValue.labelIds, dNodeValue.labelIds)
+    Assert.assertEquals(nodeValue.properties, dNodeValue.properties)
   }
 
 }
