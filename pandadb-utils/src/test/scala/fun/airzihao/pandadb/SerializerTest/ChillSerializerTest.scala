@@ -1,6 +1,7 @@
 package fun.airzihao.pandadb.SerializerTest
 
-import fun.airzihao.pandadb.Serializer.{ChillSerializer, NodeValue}
+import cn.pandadb.kernel.util.serializer.ChillSerializer
+import fun.airzihao.pandadb.Serializer.NodeValue
 import org.junit.{Assert, Test}
 
 /**

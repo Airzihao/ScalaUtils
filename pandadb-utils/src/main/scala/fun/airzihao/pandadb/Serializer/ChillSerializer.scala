@@ -1,4 +1,4 @@
-package fun.airzihao.pandadb.Serializer
+package cn.pandadb.kernel.util.serializer
 
 import com.twitter.chill.{Input, KryoBase, Output, ScalaKryoInstantiator}
 
@@ -30,5 +30,3 @@ object ChillSerializer {
     kryo.readObject(input, t)
   }
 }
-
-

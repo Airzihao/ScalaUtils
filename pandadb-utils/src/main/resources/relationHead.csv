@@ -1,0 +1,1 @@
+:REL_ID,:FROMID,:TOID,:type,:category,fromID:long,toID:String,weight:int

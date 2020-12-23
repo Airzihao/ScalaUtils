@@ -1,6 +1,6 @@
 package fun.airzihao.pandadb.SerializerTest
 
-import fun.airzihao.pandadb.Serializer.Serializer
+import cn.pandadb.kernel.util.serializer.BaseSerializer
 import fun.airzihao.pandadb.Utils.timing
 import org.junit.{Assert, Test}
 
@@ -11,19 +11,19 @@ import org.junit.{Assert, Test}
  * @Modified By:
  */
 class SerializerTest {
-  val serializer = new Serializer
+  val serializer = BaseSerializer
 
   val arr: Array[Int] = Array(1, 2, 3)
   val map: Map[Int, Any] = Map(1 -> 1, 2 -> "two", 3 -> true, 4 -> 4.0)
 
   @Test
   def testArr(): Unit = {
-    val bytesArr = serializer.intArr2Bytes(arr)
-    Assert.assertArrayEquals(arr, serializer.bytes2IntArr(bytesArr))
+    val bytesArr = serializer.intArray2Bytes(arr)
+    Assert.assertArrayEquals(arr, serializer.bytes2IntArray(bytesArr))
     println("serialize arr.")
-    timing(for (i<-1 to 10000000) serializer.intArr2Bytes(arr))
+    timing(for (i<-1 to 10000000) serializer.intArray2Bytes(arr))
     println("deserialize arr")
-    timing(for (i<-1 to 10000000) serializer.bytes2IntArr(bytesArr))
+    timing(for (i<-1 to 10000000) serializer.bytes2IntArray(bytesArr))
   }
 
   @Test

@@ -1,9 +1,6 @@
-package fun.airzihao.pandadb.Serializer
+package cn.pandadb.kernel.util.serializer
 
-import java.io.ByteArrayOutputStream
-
-import cn.pandadb.kernel.util.serializer.BaseSerializer
-import fun.airzihao.pandadb.PDBMetaData
+import fun.airzihao.pandadb.Serializer.{KeyType, NodeValue}
 import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 /**
@@ -15,8 +12,27 @@ import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 // byteBuf [id][byte:labelsLen][labels]...[propNum][propId][proptype][propLen(ifNeed)][propValue]
 // Map("String"->1, "Int" -> 2, "Long" -> 3, "Double" -> 4, "Float" -> 5, "Boolean" -> 6)
-class NodeValueSerializer extends BaseSerializer {
+object NodeSerializer extends BaseSerializer {
   override val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT
+
+  def serialize(nodeId: Long): Array[Byte] = {
+    val byteBuf: ByteBuf = allocator.heapBuffer()
+    byteBuf.writeByte(KeyType.Node.id.toByte)
+    byteBuf.writeLong(nodeId)
+    val bytes = _exportBytes(byteBuf)
+    byteBuf.release()
+    bytes
+  }
+
+  def serialize(labelId: Int, nodeId: Long): Array[Byte] = {
+    val byteBuf: ByteBuf = allocator.heapBuffer()
+    byteBuf.writeByte(KeyType.Node.id.toByte)
+    byteBuf.writeInt(labelId)
+    byteBuf.writeLong(nodeId)
+    val bytes = _exportBytes(byteBuf)
+    byteBuf.release()
+    bytes
+  }
 
   def serialize(nodeValue: NodeValue): Array[Byte] = {
     val byteBuf: ByteBuf = allocator.heapBuffer()
@@ -24,20 +40,24 @@ class NodeValueSerializer extends BaseSerializer {
     _writeLabels(nodeValue.labelIds, byteBuf)
     byteBuf.writeByte(nodeValue.properties.size)
     nodeValue.properties.foreach(kv => _writeProp(kv._1, kv._2, byteBuf))
-    val dst = new Array[Byte](byteBuf.writerIndex())
-    byteBuf.readBytes(dst)
+    val bytes = _exportBytes(byteBuf)
     byteBuf.release()
-    dst
+    bytes
   }
 
-  def deserialize(byteArr: Array[Byte]): NodeValue = {
+  def deserializeNodeValue(byteArr: Array[Byte]): NodeValue = {
     val byteBuf = Unpooled.wrappedBuffer(byteArr)
     val id = byteBuf.readLong()
     val labels: Array[Int] = _readLabels(byteBuf)
     val props: Map[Int, Any] = _readProps(byteBuf)
     byteBuf.release()
     new NodeValue(id, labels, props)
+  }
 
+  def deserializeNodeKey(byteArr: Array[Byte]): Long = {
+    val byteBuf = Unpooled.wrappedBuffer(byteArr)
+    byteBuf.readByte()
+    byteBuf.readLong()
   }
 
   private def _writeLabels(labels: Array[Int], byteBuf: ByteBuf): Unit = {
