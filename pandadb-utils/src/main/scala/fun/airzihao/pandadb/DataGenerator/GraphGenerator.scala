@@ -19,7 +19,7 @@ object GraphGenerator {
     for (i <- 1 to nodeCount) {
       if (i % 10000000 == 0) {
         bos.flush()
-        println(s"$i kw of $nodeCount nodes generated.")
+        println(s"${i/10000000} kw of $nodeCount nodes generated.")
       }
       val nodeString = wrapNode(i)
       bos.write((s"$nodeString\n").getBytes)
@@ -92,9 +92,9 @@ object GraphGenerator {
     3. node: 1,2,3,4,5,6
     4. edge: 1->2, 1->3, 2->3, 2->4, 3->4, 3->5 ...  two edges from a node.
      */
-    val nodeCount: Int = 100000000
-    generateNodes(new File("./nodes500.csv"), nodeCount)
-    generateEdges(new File("./edges500.csv"), nodeCount)
+    val nodeCount: Int = 50000000
+    generateNodes(new File("./nodes5kw.csv"), nodeCount)
+    generateEdges(new File("./edges5kw.csv"), nodeCount)
   }
 
 }
