@@ -8,9 +8,9 @@ package fun.airzihao.pandadb
  */
 object Utils {
   def timing[T](f: => T): T = {
-    val t1 = System.currentTimeMillis()
+    val t1 = System.nanoTime()
     val t = f
-    val t2 = System.currentTimeMillis()
+    val t2 = System.nanoTime()
     println(s"time cost: ${t2 - t1} ms")
     t
   }

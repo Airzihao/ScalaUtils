@@ -19,7 +19,7 @@ object NodeSerializer extends BaseSerializer {
     val byteBuf: ByteBuf = allocator.heapBuffer()
     byteBuf.writeByte(KeyType.Node.id.toByte)
     byteBuf.writeLong(nodeId)
-    val bytes = _exportBytes(byteBuf)
+    val bytes = exportBytes(byteBuf)
     byteBuf.release()
     bytes
   }
@@ -29,7 +29,7 @@ object NodeSerializer extends BaseSerializer {
     byteBuf.writeByte(KeyType.Node.id.toByte)
     byteBuf.writeInt(labelId)
     byteBuf.writeLong(nodeId)
-    val bytes = _exportBytes(byteBuf)
+    val bytes = exportBytes(byteBuf)
     byteBuf.release()
     bytes
   }
@@ -40,7 +40,7 @@ object NodeSerializer extends BaseSerializer {
     _writeLabels(nodeValue.labelIds, byteBuf)
     byteBuf.writeByte(nodeValue.properties.size)
     nodeValue.properties.foreach(kv => _writeProp(kv._1, kv._2, byteBuf))
-    val bytes = _exportBytes(byteBuf)
+    val bytes = exportBytes(byteBuf)
     byteBuf.release()
     bytes
   }
@@ -78,6 +78,6 @@ object NodeSerializer extends BaseSerializer {
   }
 
   private def _readProps(byteBuf: ByteBuf): Map[Int, Any] = {
-    _readMap(byteBuf)
+    readMap(byteBuf)
   }
 }

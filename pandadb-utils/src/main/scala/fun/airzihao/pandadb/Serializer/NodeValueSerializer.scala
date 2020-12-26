@@ -3,7 +3,7 @@ package fun.airzihao.pandadb.Serializer
 import java.io.ByteArrayOutputStream
 
 import cn.pandadb.kernel.util.serializer.BaseSerializer
-import fun.airzihao.pandadb.PDBMetaData
+import fun.airzihao.pandadb.kernel.PDBMetaData
 import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 /**
@@ -58,6 +58,6 @@ class NodeValueSerializer extends BaseSerializer {
   }
 
   private def _readProps(byteBuf: ByteBuf): Map[Int, Any] = {
-    _readMap(byteBuf)
+    readMap(byteBuf)
   }
 }
