@@ -15,15 +15,6 @@ import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 object NodeSerializer extends BaseSerializer {
   override val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT
 
-  def serialize(nodeId: Long): Array[Byte] = {
-    val byteBuf: ByteBuf = allocator.heapBuffer()
-    byteBuf.writeByte(KeyType.Node.id.toByte)
-    byteBuf.writeLong(nodeId)
-    val bytes = exportBytes(byteBuf)
-    byteBuf.release()
-    bytes
-  }
-
   def serialize(labelId: Int, nodeId: Long): Array[Byte] = {
     val byteBuf: ByteBuf = allocator.heapBuffer()
     byteBuf.writeByte(KeyType.Node.id.toByte)
