@@ -1,6 +1,6 @@
 package fun.airzihao.pandadb.kernel
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.atomic.AtomicInteger
 
 import cn.pandadb.kernel.util.serializer.BaseSerializer
 import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
@@ -28,13 +28,16 @@ trait IdMapManager {
   protected var _name2Id: Map[String, Int] = Map[String, Int]()
 
   def init(bytes: Array[Byte]): Unit = {
-    val deserialized: (Int, Int, mutable.Queue[Int], Map[Int, String], Map[String, Int]) = _deserialize(bytes)
+    val deserialized: (Int, Int, mutable.Queue[Int], Map[Int, String], Map[String, Int]) = deserialize(bytes)
     MAX_SIZE = deserialized._1
     _count = new AtomicInteger(deserialized._2)
     _availableIdQueue = deserialized._3
     _id2Name = deserialized._4
     _name2Id = deserialized._5
   }
+
+  def isIdUsed(id: Int) = _id2Name.contains(id)
+  def isNameExists(name: String) = _name2Id.contains(name)
 
   def getId(name: String): Int = {
     if(_name2Id.contains(name)) _name2Id.get(name).get
@@ -46,7 +49,7 @@ trait IdMapManager {
     else throw new Exception(s"The id $id does not exist.")
   }
 
-  // dangerous func
+  // note: dangerous func
   def recycleId(id: Int): Boolean = {
     this.synchronized{
       if(_id2Name.contains(id)) {
@@ -69,6 +72,29 @@ trait IdMapManager {
     }
   }
 
+  def serialized: Array[Byte] = {
+    // max_size, _count, availableIdQueue, _id2Name
+    val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT
+    val byteBuf: ByteBuf = allocator.buffer()
+    byteBuf.writeInt(MAX_SIZE)
+    byteBuf.writeInt(_count.get())
+    byteBuf.writeBytes(BaseSerializer.intSeq2Bytes(_availableIdQueue))
+    byteBuf.writeBytes(BaseSerializer.map2Bytes(_id2Name))
+    val bytes: Array[Byte] = BaseSerializer.exportBytes(byteBuf)
+    byteBuf.release()
+    bytes
+  }
+
+  def deserialize(bytes: Array[Byte]): (Int, Int, mutable.Queue[Int], Map[Int, String], Map[String, Int]) = {
+    val byteBuf: ByteBuf = Unpooled.wrappedBuffer(bytes)
+    val maxSize: Int = byteBuf.readInt()
+    val count: Int = byteBuf.readInt()
+    val queue: mutable.Queue[Int] = BaseSerializer.readIntQueue(byteBuf)
+    val id2Name: Map[Int, String] = BaseSerializer.readMap(byteBuf).asInstanceOf[Map[Int, String]]
+    val name2Id: Map[String, Int] = for((id, name) <- id2Name) yield (name, id)
+    (maxSize, count, queue, id2Name, name2Id)
+  }
+
   private def _insert(id: Int, name: String): Unit = {
     _id2Name += (id -> name)
     _name2Id += (name -> id)
@@ -86,28 +112,5 @@ trait IdMapManager {
         _count.getAndIncrement()
       }
     }
-  }
-
-  protected def _serialize(): Array[Byte] = {
-    // max_size, _count, availableIdQueue, _id2Name
-    val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT
-    val byteBuf: ByteBuf = allocator.buffer()
-    byteBuf.writeInt(MAX_SIZE)
-    byteBuf.writeInt(_count.get())
-    byteBuf.writeBytes(BaseSerializer.intSeq2Bytes(_availableIdQueue))
-    byteBuf.writeBytes(BaseSerializer.map2Bytes(_id2Name))
-    val bytes: Array[Byte] = BaseSerializer.exportBytes(byteBuf)
-    byteBuf.release()
-    bytes
-  }
-
-  protected def _deserialize(bytes: Array[Byte]): (Int, Int, mutable.Queue[Int], Map[Int, String], Map[String, Int]) = {
-    val byteBuf: ByteBuf = Unpooled.wrappedBuffer(bytes)
-    val maxSize: Int = byteBuf.readInt()
-    val count: Int = byteBuf.readInt()
-    val queue: mutable.Queue[Int] = BaseSerializer.readIntQueue(byteBuf)
-    val id2Name: Map[Int, String] = BaseSerializer.readMap(byteBuf).asInstanceOf[Map[Int, String]]
-    val name2Id: Map[String, Int] = for((id, name) <- id2Name) yield (name, id)
-    (maxSize, count, queue, id2Name, name2Id)
   }
 }
