@@ -12,16 +12,6 @@ import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 object RelationSerializer extends BaseSerializer {
   override val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT
 
-//  // [keyType(1Byte),relationId(8Bytes)]
-//  def serialize(edgeId: Long): Array[Byte] = {
-//    val byteBuf: ByteBuf = allocator.heapBuffer()
-//    byteBuf.writeByte(KeyType.Relation.id.toByte)
-//    byteBuf.writeLong(edgeId)
-//    val bytes = exportBytes(byteBuf)
-//    byteBuf.release()
-//    bytes
-//  }
-
   def serialize(relationId: Long, fromId: Long, toId: Long, typeId: Int, category: Int, props: Map[Int, Any]): Array[Byte] = {
     val byteBuf: ByteBuf = allocator.heapBuffer()
     byteBuf.writeLong(relationId)
