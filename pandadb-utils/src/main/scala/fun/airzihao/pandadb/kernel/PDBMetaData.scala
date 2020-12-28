@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 import cn.pandadb.kernel.kv.RocksDBStorage
 import cn.pandadb.kernel.util.serializer.BaseSerializer
+import org.rocksdb.FlushOptions
 
 /**
  * @Author: Airzihao
@@ -33,6 +34,7 @@ object PDBMetaData {
     rocksDB.put("_propIdManager".getBytes(), _propIdManager.serialized)
     rocksDB.put("_typeIdManager".getBytes(), _typeIdManager.serialized)
     rocksDB.put("_labelIdManager".getBytes(), _labelIdManager.serialized)
+    rocksDB.flush(new FlushOptions)
     rocksDB.close()
   }
 

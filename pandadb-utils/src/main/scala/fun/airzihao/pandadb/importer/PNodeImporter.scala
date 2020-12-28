@@ -1,82 +1,122 @@
-//package fun.airzihao.pandadb.importer
-//
-//import java.io.File
-//import java.text.SimpleDateFormat
-//import java.util.Date
-//
-//import scala.io.Source
-//
-///**
-// * @Author: Airzihao
-// * @Description:
-// * @Date: Created at 17:22 2020/12/3
-// * @Modified By:
-// */
-//
-///**
-// *
-//  headMap(propName1 -> type, propName2 -> type ...)
-// */
-//// protocol: :ID :LABELS propName1:type1 proName2:type2
-//case class TempNode(id: Long, labels: Array[Int], properties: Map[String, Any])
-//
-//class PNodeImporter(nodeFile: File, hFile : File, rocksDBGraphAPI: RocksDBGraphAPI) {
-////  val db: RocksDB = rocksDB
-//  val file: File = nodeFile
-//  val headFile: File = hFile
-//  // record the propId sort in the file, example: Array(2, 4, 1, 3)
-//  var propSortArr: Array[String] = null
-//  val headMap: Map[String, String] = _setNodeHead()
-//
-//  //todo: automatically print progress.
-//  def importNodes(): Unit = {
-//    val iter = Source.fromFile(file).getLines()
-//    var i = 0
-//    while (iter.hasNext) {
-//      if(i % 10000000 == 0) {
-//        val time1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date)
-//        println(s"${i/10000000}% nodes imported. $time1")
-//      }
-//      i += 1;
-//      val tempNode = _wrapNode(iter.next().replace("\n", "").split(","))
-//      rocksDBGraphAPI.addNode(tempNode.id, tempNode.labels, tempNode.properties)
-//    }
-//  }
-//
-//  private def _setNodeHead(): Map[String, String] = {
-//    var hMap: Map[String, String] = Map[String, String]()
-//    val headArr = Source.fromFile(hFile).getLines().next().replace("\n", "").split(",")
-//    propSortArr = new Array[String](headArr.length-2)
-//    // headArr(0) is :ID, headArr(1) is :LABELS
-//    for(i <- 2 to headArr.length - 1) {
-//      val fieldArr = headArr(i).split(":")
-//      val propName: String = fieldArr(0)
-//      propSortArr(i-2) = propName
-//      val propType: String = fieldArr(1).toLowerCase()
-//      hMap += (propName -> propType)
-//    }
-//    hMap
-//  }
-//
-//  private def _wrapNode(lineArr: Array[String]): TempNode = {
-//    val id = lineArr(0).toLong
-////  TODO：modify the labels import mechanism, enable real array
-//    val labels: Array[Int] = Array(PDBMetaData.getLabelId(lineArr(1)))
-//    var propMap: Map[String, Any] = Map[String, Any]()
-//    for(i <-2 to lineArr.length -1) {
-//      val propName = propSortArr(i - 2)
-//      val propValue: Any = {
-//        headMap(propName) match {
-//          case "long" => lineArr(i).toLong
-//          case "int" => lineArr(i).toInt
-//          case "boolean" => lineArr(i).toBoolean
-//          case "double" => lineArr(i).toDouble
-//          case _ => lineArr(i).replace("\"", "")
-//        }
-//      }
-//      propMap += (propName -> propValue)
-//    }
-//    TempNode(id, labels, propMap)
-//  }
-//
-//}
+package fun.airzihao.pandadb.importer
+
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
+
+import cn.pandadb.kernel.kv.RocksDBStorage
+import cn.pandadb.kernel.util.serializer.NodeSerializer
+//import cn.pandadb.tools.importer.IFReader.reader
+import org.rocksdb.{FlushOptions, WriteBatch, WriteOptions}
+
+/**
+ * @Author: Airzihao
+ * @Description:
+ * @Date: Created at 17:22 2020/12/3
+ * @Modified By:
+ */
+
+/**
+ *
+headMap(propName1 -> type, propName2 -> type ...)
+ */
+// protocol: :ID :LABELS propName1:type1 proName2:type2
+class PNodeImporter(dbPath: String, nodeHeadFile: File, nodeFile: File) extends Importer with Logging {
+
+  val NONE_LABEL_ID: Int = -1
+  override protected var propSortArr: Array[Int] = null //Array(propId), record the sort of propId in head file
+  override val headMap: Map[Int, String] = _setNodeHead()  // map(propId -> type)
+  override val importerFileReader = new ImporterFileReader(nodeFile, 500000)
+
+  override val service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+
+  service.scheduleAtFixedRate(importerFileReader.fillQueue, 0, 100, TimeUnit.MILLISECONDS)
+  service.scheduleAtFixedRate(closer, 1, 1, TimeUnit.SECONDS)
+
+  private val nodeDB = RocksDBStorage.getDB(s"${dbPath}/nodes")
+  private val nodeLabelDB = RocksDBStorage.getDB(s"${dbPath}/nodeLabel")
+
+  val estNodeCount: Long = estLineCount(nodeFile)
+  var globalCount: AtomicLong = new AtomicLong(0)
+
+  val writeOptions: WriteOptions = new WriteOptions()
+  writeOptions.setDisableWAL(true)
+  writeOptions.setIgnoreMissingColumnFamilies(true)
+  writeOptions.setSync(false)
+
+  def importNodes(): Unit = {
+    importData()
+    nodeDB.close()
+    nodeLabelDB.close()
+    logger.info(s"$globalCount nodes imported.")
+  }
+
+  override protected def _importTask(taskId: Int): Boolean = {
+    val serializer = NodeSerializer
+    var innerCount = 0
+    val nodeBatch = new WriteBatch()
+    val labelBatch = new WriteBatch()
+
+    while (importerFileReader.notFinished) {
+      val batchData = importerFileReader.getLines
+      batchData.foreach(line => {
+        innerCount += 1
+        val lineArr = line.replace("\n", "").split(",")
+        val node = _wrapNode(lineArr)
+        val keys: Array[(Array[Byte], Array[Byte])] = _getNodeKeys(node._1, node._2)
+        val serializedNodeValue = serializer.serialize(node._1, node._2, node._3)
+        keys.foreach(pair =>{
+          nodeBatch.put(pair._1, serializedNodeValue)
+          labelBatch.put(pair._2, Array.emptyByteArray)
+        })
+        if (innerCount % 1000000 == 0) {
+          nodeDB.write(writeOptions, nodeBatch)
+          nodeLabelDB.write(writeOptions, labelBatch)
+          nodeBatch.clear()
+          labelBatch.clear()
+        }
+      })
+      nodeDB.write(writeOptions, nodeBatch)
+      nodeLabelDB.write(writeOptions, labelBatch)
+      nodeBatch.clear()
+      labelBatch.clear()
+      if (globalCount.addAndGet(batchData.length) % 10000000 == 0) {
+        val time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date)
+        logger.info(s"${globalCount.get() / 10000000}kw of $estNodeCount(est) nodes imported. $time, thread$taskId")
+      }
+    }
+    val flushOptions = new FlushOptions
+    nodeDB.flush(flushOptions)
+    nodeLabelDB.flush(flushOptions)
+    logger.info(s"$innerCount, $taskId")
+    true
+  }
+
+  private def _setNodeHead(): Map[Int, String] = {
+    _setHead(2, nodeHeadFile)
+  }
+
+  private def _wrapNode(lineArr: Array[String]): (Long, Array[Int], Map[Int, Any]) = {
+    val id = lineArr(0).toLong
+    val labels: Array[String] = lineArr(1).split(";")
+    val labelIds: Array[Int] = labels.map(label => PDBMetaData.getLabelId(label))
+    val propMap: Map[Int, Any] = _getPropMap(lineArr, propSortArr, 2)
+    (id, labelIds, propMap)
+  }
+
+  private def _getNodeKeys(id: Long, labelIds: Array[Int]): Array[(Array[Byte], Array[Byte])] = {
+    if(labelIds.isEmpty) {
+      val nodeKey = KeyHandler.nodeKeyToBytes(NONE_LABEL_ID, id)
+      val labelKey = KeyHandler.nodeLabelToBytes(id, NONE_LABEL_ID)
+      Array((nodeKey, labelKey))
+    } else {
+      labelIds.map(label => {
+        val nodeKey = KeyHandler.nodeKeyToBytes(label, id)
+        val labelKey = KeyHandler.nodeLabelToBytes(id, label)
+        (nodeKey, labelKey)
+      })
+    }
+  }
+}

@@ -40,8 +40,10 @@ trait IdMapManager {
   def isNameExists(name: String) = _name2Id.contains(name)
 
   def getId(name: String): Int = {
-    if(_name2Id.contains(name)) _name2Id.get(name).get
-    else this.synchronized(_addName(name))
+    this.synchronized{
+      if(_name2Id.contains(name)) _name2Id.get(name).get
+      else _addName(name)
+    }
   }
 
   def getName(id: Int): String = {
@@ -106,8 +108,7 @@ trait IdMapManager {
         val id: Int = _availableIdQueue.dequeue()
         _insert(id, name)
         id
-      }
-      else {
+      } else {
         _insert(_count.get(), name)
         _count.getAndIncrement()
       }
