@@ -80,9 +80,8 @@ object GraphGenerator {
     val fromId_p = fromId
     val toIdStr = toId.toString
     val edgeType: String = s"type${fromId % 10}"
-    val category: Int = (fromId % 100).toInt
     val weight: Int = (fromId % 100).toInt
-    s"$edgeId,$fromId,$toId,$edgeType,$category,$fromId_p,$toIdStr,$weight"
+    s"$edgeId,$fromId,$toId,$edgeType,$fromId_p,$toIdStr,$weight"
   }
 
   def main(args: Array[String]): Unit = {
@@ -92,9 +91,9 @@ object GraphGenerator {
     3. node: 1,2,3,4,5,6
     4. edge: 1->2, 1->3, 2->3, 2->4, 3->4, 3->5 ...  two edges from a node.
      */
-    val nodeCount: Int = 50000000
-    generateNodes(new File("./nodes5kw.csv"), nodeCount)
-    generateEdges(new File("./edges5kw.csv"), nodeCount)
+    val nodeCount: Int = 10000000
+    generateNodes(new File("./output/nodes1kw.csv"), nodeCount)
+    generateEdges(new File("./output/edges1kw.csv"), nodeCount)
   }
 
 }

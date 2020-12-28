@@ -10,7 +10,7 @@ import org.junit.{Assert, Test}
  * @Date: Created at 21:14 2020/12/17
  * @Modified By:
  */
-class SerializerTest {
+class BaseSerializerTest {
   val serializer = BaseSerializer
 
   val arr: Array[Int] = Array(1, 2, 3)
