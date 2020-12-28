@@ -1,7 +1,7 @@
 package fun.airzihao.pandadb.SerializerTest
 
 import cn.pandadb.kernel.util.serializer.ChillSerializer
-import fun.airzihao.pandadb.Serializer.NodeValue
+import fun.airzihao.pandadb.kernel.store.StoredNodeWithProperty
 import org.junit.{Assert, Test}
 
 /**
@@ -15,9 +15,9 @@ class ChillSerializerTest {
 
   @Test
   def test() = {
-    val nodeValue = new NodeValue(1, Array(1), Map(1->123, 2->"qwe"))
+    val nodeValue = new StoredNodeWithProperty(1, Array(1), Map(1->123, 2->"qwe"))
     val bytes = chillSerializer.serialize(nodeValue)
-    val dNodeValue = chillSerializer.deserialize(bytes, classOf[NodeValue])
+    val dNodeValue = chillSerializer.deserialize(bytes, classOf[StoredNodeWithProperty])
     Assert.assertEquals(nodeValue.id, dNodeValue.id)
     Assert.assertArrayEquals(nodeValue.labelIds, dNodeValue.labelIds)
     Assert.assertEquals(nodeValue.properties, dNodeValue.properties)

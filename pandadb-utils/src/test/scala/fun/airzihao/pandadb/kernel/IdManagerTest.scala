@@ -36,5 +36,4 @@ class IdManagerTest {
     timing(for (i<-1 to 100000000) PDBMetaData.getPropId("bob"))
   }
 
-
 }

@@ -1,6 +1,8 @@
 package cn.pandadb.kernel.util.serializer
 
-import fun.airzihao.pandadb.Serializer.{KeyType, StoredRelation, StoredRelationWithProperty}
+
+import cn.pandadb.kernel.util.serializer.RelationSerializer.{_writeMap, exportBytes, readMap}
+import fun.airzihao.pandadb.kernel.store.{StoredRelation, StoredRelationWithProperty}
 import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 /**
@@ -12,13 +14,20 @@ import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 object RelationSerializer extends BaseSerializer {
   override val allocator: ByteBufAllocator = ByteBufAllocator.DEFAULT
 
-  def serialize(relationId: Long, fromId: Long, toId: Long, typeId: Int, category: Int, props: Map[Int, Any]): Array[Byte] = {
+  override def serialize(relationId: Long): Array[Byte] = {
+    BaseSerializer.serialize(relationId)
+  }
+
+  def serialize(relation: StoredRelationWithProperty): Array[Byte] = {
+    serialize(relation.id, relation.from, relation.to, relation.typeId, relation.properties)
+  }
+
+  def serialize(relationId: Long, fromId: Long, toId: Long, typeId: Int, props: Map[Int, Any]): Array[Byte] = {
     val byteBuf: ByteBuf = allocator.heapBuffer()
     byteBuf.writeLong(relationId)
     byteBuf.writeLong(fromId)
     byteBuf.writeLong(toId)
     byteBuf.writeByte(typeId)
-    byteBuf.writeInt(category)
     _writeMap(props, byteBuf)
     val bytes = exportBytes(byteBuf)
     byteBuf.release()
@@ -31,10 +40,9 @@ object RelationSerializer extends BaseSerializer {
     val fromId: Long = byteBuf.readLong()
     val toId: Long = byteBuf.readLong()
     val typeId: Int = byteBuf.readByte().toInt
-    val category: Int = byteBuf.readInt()
     val props: Map[Int, Any] = readMap(byteBuf)
     byteBuf.release()
-    new StoredRelationWithProperty(relationId, fromId, toId, typeId, category, props)
+    new StoredRelationWithProperty(relationId, fromId, toId, typeId, props)
   }
 
   def deserializeRelWithoutProps(bytesArray: Array[Byte]): StoredRelation = {
@@ -43,7 +51,6 @@ object RelationSerializer extends BaseSerializer {
     val fromId: Long = byteBuf.readLong()
     val toId: Long = byteBuf.readLong()
     val typeId: Int = byteBuf.readByte().toInt
-    val category: Int = byteBuf.readInt()
-    StoredRelation(relationId, fromId, toId, typeId, category)
+    StoredRelation(relationId, fromId, toId, typeId)
   }
 }

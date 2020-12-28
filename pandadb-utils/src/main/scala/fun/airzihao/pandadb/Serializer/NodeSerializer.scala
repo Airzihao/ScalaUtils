@@ -1,6 +1,7 @@
 package cn.pandadb.kernel.util.serializer
 
-import fun.airzihao.pandadb.Serializer.{KeyType, NodeValue}
+import cn.pandadb.kernel.util.serializer.NodeSerializer.{_writeKV, exportBytes, readMap}
+import fun.airzihao.pandadb.kernel.store.StoredNodeWithProperty
 import io.netty.buffer.{ByteBuf, ByteBufAllocator, Unpooled}
 
 /**
@@ -17,7 +18,6 @@ object NodeSerializer extends BaseSerializer {
 
   def serialize(labelId: Int, nodeId: Long): Array[Byte] = {
     val byteBuf: ByteBuf = allocator.heapBuffer()
-    byteBuf.writeByte(KeyType.Node.id.toByte)
     byteBuf.writeInt(labelId)
     byteBuf.writeLong(nodeId)
     val bytes = exportBytes(byteBuf)
@@ -25,29 +25,32 @@ object NodeSerializer extends BaseSerializer {
     bytes
   }
 
-  def serialize(nodeValue: NodeValue): Array[Byte] = {
+  def serialize(nodeValue: StoredNodeWithProperty): Array[Byte] = {
+    serialize(nodeValue.id, nodeValue.labelIds, nodeValue.properties)
+  }
+
+  def serialize(id: Long, labels: Array[Int], prop: Map[Int, Any]): Array[Byte] = {
     val byteBuf: ByteBuf = allocator.heapBuffer()
-    byteBuf.writeLong(nodeValue.id)
-    _writeLabels(nodeValue.labelIds, byteBuf)
-    byteBuf.writeByte(nodeValue.properties.size)
-    nodeValue.properties.foreach(kv => _writeProp(kv._1, kv._2, byteBuf))
+    byteBuf.writeLong(id)
+    _writeLabels(labels, byteBuf)
+    byteBuf.writeByte(prop.size)
+    prop.foreach(kv => _writeProp(kv._1, kv._2, byteBuf))
     val bytes = exportBytes(byteBuf)
     byteBuf.release()
     bytes
   }
 
-  def deserializeNodeValue(byteArr: Array[Byte]): NodeValue = {
+  def deserializeNodeValue(byteArr: Array[Byte]): StoredNodeWithProperty = {
     val byteBuf = Unpooled.wrappedBuffer(byteArr)
     val id = byteBuf.readLong()
     val labels: Array[Int] = _readLabels(byteBuf)
     val props: Map[Int, Any] = _readProps(byteBuf)
     byteBuf.release()
-    new NodeValue(id, labels, props)
+    new StoredNodeWithProperty(id, labels, props)
   }
 
   def deserializeNodeKey(byteArr: Array[Byte]): Long = {
     val byteBuf = Unpooled.wrappedBuffer(byteArr)
-    byteBuf.readByte()
     byteBuf.readLong()
   }
 

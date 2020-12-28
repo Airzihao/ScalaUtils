@@ -1,8 +1,8 @@
 package fun.airzihao.pandadb.SerializerTest
 
-import cn.pandadb.kernel.util.serializer.ChillSerializer
-import fun.airzihao.pandadb.Serializer.{NodeValue, NodeValueSerializer}
+import cn.pandadb.kernel.util.serializer.{ChillSerializer, NodeSerializer}
 import fun.airzihao.pandadb.Utils.timing
+import fun.airzihao.pandadb.kernel.store.StoredNodeWithProperty
 import org.junit.{Assert, Test}
 
 /**
@@ -13,9 +13,9 @@ import org.junit.{Assert, Test}
  */
 class PerfTest {
 
-  val nodeValue = new NodeValue(123456, Array(1), Map(1->1, 3->true, 2->"sadd"))
+  val nodeValue = new StoredNodeWithProperty(123456, Array(1), Map(1->1, 3->true, 2->"sadd"))
   val chillSerializer = ChillSerializer
-  val nodeValueSerializer = new NodeValueSerializer
+  val nodeValueSerializer = NodeSerializer
 
   @Test
   def testSerialize(): Unit = {
@@ -29,8 +29,8 @@ class PerfTest {
     println("deserialize")
     val chillBytes: Array[Byte] = chillSerializer.serialize(nodeValue)
     val nodeBytes: Array[Byte] = nodeValueSerializer.serialize(nodeValue)
-    timing(_repeatDeserialize(chillSerializer.deserialize(chillBytes, classOf[NodeValue]), 10000000))
-    timing(_repeatDeserialize(nodeValueSerializer.deserialize(nodeBytes), 10000000))
+    timing(_repeatDeserialize(chillSerializer.deserialize(chillBytes, classOf[StoredNodeWithProperty]), 10000000))
+    timing(_repeatDeserialize(nodeValueSerializer.deserializeNodeValue(nodeBytes), 10000000))
   }
 
   private def _repeatSerialize[Array[Byte]](f: => Array[Byte], repeatTime: Int) = {
