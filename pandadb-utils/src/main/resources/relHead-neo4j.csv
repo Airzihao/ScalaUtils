@@ -1,0 +1,1 @@
+id:Long,:START_ID,:END_ID,:TYPE,fromID:long,toID:String,weight:int

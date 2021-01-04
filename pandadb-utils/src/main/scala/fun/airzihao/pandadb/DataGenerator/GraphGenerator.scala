@@ -13,25 +13,30 @@ object GraphGenerator {
   val nameMap: Map[Int, String] = Map(0 -> "Alice Panda", 1 -> "Bob Panda", 2 -> "Chris Panda", 3 -> "David Panda", 4 -> "Ellis Panda", 5 -> "Frank Panda",
     6 -> "Gamma Panda", 7 -> "Harry Panda", 8 -> "Irving Panda", 9 -> "Jackson Panda")
 
-  def generateNodes(tarNodeFile: File, nodeCount: Int): Unit = {
+  def generateNodes(tarNodeFile: File, nodeCount: Long): Unit = {
     val bos = new BufferedOutputStream(new FileOutputStream(tarNodeFile))
-    //    var count = 0
-    for (i <- 1 to nodeCount) {
+    var i: Long = 1
+    while (i <= nodeCount) {
       if (i % 10000000 == 0) {
         bos.flush()
         println(s"${i/10000000} kw of $nodeCount nodes generated.")
       }
       val nodeString = wrapNode(i)
       bos.write((s"$nodeString\n").getBytes)
+      i += 1
     }
+//    for (i <- 1 to nodeCount) {
+//
+//    }
     bos.flush()
   }
 
-  def generateEdges(tarEdgeFile: File, nodeCount: Int): Unit = {
+  def generateEdges(tarEdgeFile: File, nodeCount: Long): Unit = {
     val bos = new BufferedOutputStream(new FileOutputStream(tarEdgeFile))
     //    var count = 0
     var relId = 1
-    for (i <- 1 to nodeCount - 2) {
+    var i: Long = 1
+    while (i <= (nodeCount-2)){
       if (i % 10000000 == 0) {
         bos.flush()
         println(s"${i / 10000000}kw edges generated.")
@@ -41,6 +46,7 @@ object GraphGenerator {
       relId += 2
       bos.write(edge1.getBytes)
       bos.write(edge2.getBytes)
+      i+=1
     }
     bos.flush()
 
@@ -91,9 +97,11 @@ object GraphGenerator {
     3. node: 1,2,3,4,5,6
     4. edge: 1->2, 1->3, 2->3, 2->4, 3->4, 3->5 ...  two edges from a node.
      */
-    val nodeCount: Int = args(0).toInt
+    val nodeCount: Long = args(0).toLong
     val nodeFilePath: String = args(1)
     val relFilePath: String = args(2)
+    if(new File(nodeFilePath).exists()) throw new Exception(s"The export node File $nodeFilePath exists, try another path.")
+    if(new File(relFilePath).exists()) throw new Exception(s"The export relation File $relFilePath exists, try another path.")
     generateNodes(new File(nodeFilePath), nodeCount)
     generateEdges(new File(relFilePath), nodeCount)
   }
