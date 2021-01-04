@@ -1,4 +1,6 @@
-This util is used to generate
+This util is used to generate test data for PandaDB and neo4j. For convenient evaluation, the structure is shown in the below picture.
+
+![Structure](https://github.com/Airzihao/MDPicturePool/raw/master/202101/scalaUtil-structure-example.png)
 
 
 Run the main func of fun.airzihao.pandadb.DataGenerator.GraphGenerator
