@@ -1,4 +1,8 @@
+
+
 import java.io.{File, FileWriter}
+import java.util.concurrent.atomic.AtomicLong
+import scala.io.Source
 
 /**
  * @Author: Airzihao
@@ -9,6 +13,15 @@ import java.io.{File, FileWriter}
 object MetaData {
   var labelSerialMap: Map[String, Int] = Map[String, Int]()
   var labelSerialIndex: Int = 1
+  val relationId: AtomicLong = new AtomicLong(0)
+
+  val headLineMap: Map[String, String] = {
+    val iter = Source.fromFile("./output/headLines").getLines()
+    iter.map(line => {
+      val kv = line.split("=")
+      (kv(0) -> kv(1))
+    }).toMap
+  }
 
   val prefix: Long = 100000000000000L
 
@@ -33,8 +46,11 @@ object MetaData {
     val fileWriter = new FileWriter(file)
     fileWriter.write(s"prefix:$prefix\n")
     fileWriter.write(s"labelSerialIndex:$labelSerialIndex\n")
+    fileWriter.write(s"relationId:$relationId\n")
     labelSerialMap.foreach(kv => fileWriter.write(s"${kv._1}:${kv._2}\n"))
     fileWriter.flush()
   }
+
+  def getRelId: Long = relationId.getAndIncrement()
 
 }
