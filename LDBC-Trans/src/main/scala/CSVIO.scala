@@ -1,5 +1,5 @@
 import java.io.{BufferedOutputStream, File, FileOutputStream}
-import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 /**
@@ -8,25 +8,46 @@ import scala.io.Source
  * @Date: Created at 16:46 2021/1/11
  * @Modified By:
  */
-class CSVReader(file: File, spliter: String = LDBCTramsformer.spliter) {
-  val iter = Source.fromFile(file).getLines()
-  def getAsArray: Iterator[Array[String]] = Source.fromFile(file).getLines().map(item => item.split(spliter))
+class CSVReader(file: File, spliter: String = LDBCTransformer.spliter) {
+  val source = Source.fromFile(file)
+  val iter = source.getLines()
+
+  def getAsCSVLines: Iterator[CSVLine] = source.getLines().map(line => new CSVLine(line.split(spliter)))
+  def close: Unit = source.close()
 }
 
 class CSVWriter(target: File) {
   val bos = new BufferedOutputStream(new FileOutputStream(target))
-  val flusher = new Runnable {
-    override def run(): Unit = bos.flush()
-  }
-  val service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-  service.scheduleAtFixedRate(flusher, 100, 100, TimeUnit.MILLISECONDS)
 
-  def close = {
+  def close: Unit = {
     bos.flush()
-    service.shutdown()
+    bos.close()
   }
 
-  def write(bytes: Array[Byte]) = bos.write(bytes)
-  def write(lineArr: Array[String]) = bos.write(s"${lineArr.mkString(",")}\n".getBytes())
-  def write(line: String) = bos.write(s"$line\n".getBytes)
+  def write(bytes: Array[Byte]): Unit = {
+    bos.write(bytes)
+    bos.flush()
+  }
+  def write(lineArr: Array[String]): Unit = write(s"${lineArr.mkString("|")}\n".getBytes())
+  def write(line: String): Unit = write(s"$line\n".getBytes)
+}
+
+class CSVLine(arr: Array[String]) {
+  private val _lineArrayBuffer: ArrayBuffer[String] = new ArrayBuffer[String]() ++ arr
+
+  def insertElemAtIndex(index: Int, elem: String): Unit = {
+    _lineArrayBuffer.insert(index, elem)
+  }
+
+  def dropElemAtIndex(index: Int): Unit = {
+    _lineArrayBuffer.remove(index)
+  }
+
+  def replaceElemAtIndex(index: Int, elem: String): Unit = {
+    _lineArrayBuffer.remove(index)
+    _lineArrayBuffer.insert(index, elem)
+  }
+
+  def getAsArray: Array[String] = _lineArrayBuffer.toArray
+  def getAsString: String = _lineArrayBuffer.mkString("|")
 }
