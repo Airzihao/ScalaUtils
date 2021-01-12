@@ -1,8 +1,5 @@
-
-import java.io.{BufferedOutputStream, File, FileOutputStream}
-import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
+import java.io.File
 import scala.collection.mutable
-import scala.io.Source
 
 /**
  * @Author: Airzihao
@@ -12,11 +9,16 @@ import scala.io.Source
  */
 
 class Merger (personFile: File, emailFile: File, languageFile: File, targetFile: File){
-  val personIter = new CSVReader(personFile).iter
-  personIter.next()
-  val emailIter = new CSVReader(emailFile).iter
+  val personReader: CSVReader = new CSVReader(personFile)
+  val personIter = personReader.iter
+  val personHead = personIter.next() + "|emails|languages"
+
+  val emailReader: CSVReader = new CSVReader(emailFile)
+  val emailIter = emailReader.iter
   emailIter.next()
-  val languageIter = new CSVReader(languageFile).iter
+
+  val languageReader: CSVReader = new CSVReader(languageFile)
+  val languageIter = languageReader.iter
   languageIter.next()
 
   val emailMap = getMergedMap(emailIter)
@@ -25,7 +27,7 @@ class Merger (personFile: File, emailFile: File, languageFile: File, targetFile:
   def getMergedMap(iter: Iterator[String]): MapForMerge = {
     val mergeMap = new MapForMerge
     iter.foreach(line => {
-      val lineArr = line.split(LDBCTramsformer.spliter)
+      val lineArr = line.split(LDBCTransformer.spliter)
       mergeMap.put(lineArr(1), lineArr(2))
     })
     mergeMap
@@ -33,15 +35,26 @@ class Merger (personFile: File, emailFile: File, languageFile: File, targetFile:
 
   def merge(): Unit = {
     val csvWriter = new CSVWriter(targetFile)
+    csvWriter.write(personHead)
     personIter.foreach(line => {
-      val lineArr = line.split(LDBCTramsformer.spliter)
+      val lineArr = line.split(LDBCTransformer.spliter)
       val id = lineArr(1)
       val email: String = emailMap.getAsString(id)
       val language: String = languageMap.getAsString(id)
-      val finalLine = s"$line${LDBCTramsformer.spliter}$email${LDBCTramsformer.spliter}$language"
+      val finalLine = s"$line${LDBCTransformer.spliter}$email${LDBCTransformer.spliter}$language"
       csvWriter.write(finalLine)
     })
     csvWriter.close
+  }
+
+  def close: Unit = {
+    personReader.close
+    emailReader.close
+    languageReader.close
+    emailFile.delete()
+    languageFile.delete()
+    personFile.delete()
+    targetFile.renameTo(personFile)
   }
 
 }
