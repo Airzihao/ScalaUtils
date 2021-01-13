@@ -1,3 +1,5 @@
+package fun.airzihao.ldbc
+
 import java.io.{BufferedOutputStream, File, FileOutputStream}
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
