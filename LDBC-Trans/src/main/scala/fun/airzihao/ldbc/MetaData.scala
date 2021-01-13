@@ -1,4 +1,4 @@
-
+package fun.airzihao.ldbc
 
 import java.io.{File, FileWriter}
 import java.util.concurrent.atomic.AtomicLong
@@ -16,7 +16,7 @@ object MetaData {
   val relationId: AtomicLong = new AtomicLong(0)
 
   val headLineMap: Map[String, String] = {
-    val iter = Source.fromFile("./output/headLines").getLines()
+    val iter = Source.fromFile("./headLines").getLines()
     iter.map(line => {
       val kv = line.split("=")
       (kv(0) -> kv(1))
@@ -26,18 +26,21 @@ object MetaData {
   val prefix: Long = 100000000000000L
 
   def getLabelSerialNum(label: String): Int = {
-    if(labelSerialMap.contains(label)) labelSerialMap(label)
-    else {
-      labelSerialMap += (label -> labelSerialIndex)
-      val serialNum = labelSerialIndex
-      labelSerialIndex += 1
-      serialNum
+    this.synchronized {
+      if (labelSerialMap.contains(label)) labelSerialMap(label)
+      else {
+        labelSerialMap += (label -> labelSerialIndex)
+        val serialNum = labelSerialIndex
+        labelSerialIndex += 1
+        serialNum
+      }
     }
   }
 
   def getTransedId(srcId: Long, label: String): Long = {
-    srcId + getLabelSerialNum(label)*prefix
+    srcId + getLabelSerialNum(label) * prefix
   }
+
   def getTransedId(srcId: Long, serialNum: Int): Long = {
     srcId + prefix * serialNum
   }

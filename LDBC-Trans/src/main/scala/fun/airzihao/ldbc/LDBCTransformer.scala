@@ -1,4 +1,6 @@
-import java.io.{File, FileWriter}
+package fun.airzihao.ldbc
+
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
@@ -6,7 +8,6 @@ import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.io.Source
 
 /**
  * @Author: Airzihao
@@ -15,21 +16,14 @@ import scala.io.Source
  * @Modified By:
  */
 object LDBCTransformer {
-  val srcDir: File = new File("./output/social_network-0.003")
-  val srcDynamicDir: File = new File(s"$srcDir/dynamic")
-  val srcStaticDir: File = new File(s"$srcDir/static")
-  val targetDir: File = new File("./output/sn-0.003-output")
+  var srcDir: File = new File("")
+  var srcDynamicDir: File = new File("")
+  var srcStaticDir: File = new File("")
+  var targetDir: File = new File("")
+  var targetNodeDir: File = new File("")
+  var targetRelDir: File = new File("")
 
   val spliter: String = "\\|"
-
-  val nodeFilesSet: Set[File] = {
-    val set = srcDynamicDir.listFiles().filter(file => isNodeFile(file.getName)).toSet ++ srcStaticDir.listFiles().filter(file => isNodeFile(file.getName)).toSet
-    set
-  }
-  val relFilesSet: Set[File] = {
-    val set = srcDynamicDir.listFiles().filter(file => isRelationFile(file.getName)).toSet ++ srcStaticDir.listFiles().filter(file => isRelationFile(file.getName)).toSet
-    set
-  }
 
   def mergePersonCsv: Unit = {
     val personFile = new File(s"$srcDynamicDir/person_0_0.csv")
@@ -44,6 +38,7 @@ object LDBCTransformer {
   def isNodeFile(name: String): Boolean = {
     name.split("_").length == 3
   }
+
   def isRelationFile(name: String): Boolean = {
     // two excepted files
     name.split("_").length == 5 && name != "person_email_emailaddress_0_0.csv" && name != "person_speaks_language_0_0.csv"
@@ -62,9 +57,9 @@ object LDBCTransformer {
     fileName.split("_")(1)
   }
 
-  def getOutputFileBySrcName(srcName: String): File = {
+  def getOutputFileBySrcName(srcName: String, targetPath: File): File = {
     val fileName = srcName.replace("_0_0.csv", "-output.csv")
-    new File(s"$targetDir/$fileName")
+    new File(s"$targetPath/$fileName")
   }
 
   val globalNodeCount: AtomicLong = new AtomicLong(0)
@@ -79,24 +74,46 @@ object LDBCTransformer {
 
   def main(args: Array[String]): Unit = {
 
+    srcDir = new File(args(0))
+    targetDir = new File(args(1))
+    srcDynamicDir = new File(s"$srcDir/dynamic")
+    srcStaticDir = new File(s"$srcDir/static")
+    targetDir = new File(args(1))
+    targetNodeDir = new File(s"$targetDir/nodes")
+    targetRelDir = new File(s"$targetDir/relations")
+    targetDir.mkdirs()
+    targetNodeDir.mkdir()
+    targetRelDir.mkdir()
+
+
+    val nodeFilesSet: Set[File] = {
+      val set = srcDynamicDir.listFiles().filter(file => isNodeFile(file.getName)).toSet ++ srcStaticDir.listFiles().filter(file => isNodeFile(file.getName)).toSet
+      set
+    }
+    val relFilesSet: Set[File] = {
+      val set = srcDynamicDir.listFiles().filter(file => isRelationFile(file.getName)).toSet ++ srcStaticDir.listFiles().filter(file => isRelationFile(file.getName)).toSet
+      set
+    }
+
+
     val loggerService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     loggerService.scheduleAtFixedRate(progressPrinter, 0, 10, TimeUnit.SECONDS)
 
     mergePersonCsv
     println(s"person file merged.")
 
-//    val nodeTasks: List[Future[Unit]] = nodeFilesList.map(file => Future {
-//      new NodeFileHandler(file).handle()
-//    })
-//    nodeTasks.foreach(task => Await.result(task, Duration.Inf))
-    nodeFilesSet.map(file => new NodeFileHandler(file).handle())
+    val nodeTasks: Set[Future[Unit]] = nodeFilesSet.map(file => Future {
+      new NodeFileHandler(file).handle()
+    })
+    nodeTasks.foreach(task => Await.result(task, Duration.Inf))
+    //    nodeFilesSet.map(file => new NodeFileHandler(file).handle())
     println(s"node files transfered.")
-//
-//    val relTasks: List[Future[Unit]] = relFilesList.map(file => Future {
-//      new RelationFileHandler(file).handle()
-//    })
-//    relTasks.foreach(task => Await.result(task, Duration.Inf))
-    relFilesSet.map(file => new RelationFileHandler(file).handle())
+    //
+    val relTasks: Set[Future[Unit]] = relFilesSet.map(file => Future {
+      new RelationFileHandler(file).handle()
+    })
+    relTasks.foreach(task => Await.result(task, Duration.Inf))
+    //    relFilesSet.map(file => new RelationFileHandler(file).handle())
     println(s"relation files transfered.")
     progressPrinter.run()
     loggerService.shutdown()

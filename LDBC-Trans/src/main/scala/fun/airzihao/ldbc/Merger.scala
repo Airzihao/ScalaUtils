@@ -1,3 +1,5 @@
+package fun.airzihao.ldbc
+
 import java.io.File
 import scala.collection.mutable
 

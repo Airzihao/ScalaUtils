@@ -1,3 +1,5 @@
+package fun.airzihao.ldbc
+
 import java.io.File
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
@@ -9,20 +11,24 @@ import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
  */
 class NodeFileHandler(file: File) extends FileHandler {
   override val srcCSVFile: File = file
-  override val targetCSVFile: File = LDBCTransformer.getOutputFileBySrcName(srcCSVFile.getName)
+  override val targetCSVFile: File = LDBCTransformer.getOutputFileBySrcName(srcCSVFile.getName, LDBCTransformer.targetNodeDir)
   override val csvReader: CSVReader = new CSVReader(srcCSVFile)
   override val readerIter: Iterator[CSVLine] = csvReader.getAsCSVLines
   override val csvWriter: CSVWriter = new CSVWriter(targetCSVFile)
-  val idIndex = readerIter.next().getAsArray.indexOf("id")
+
+  val srcHead: Array[String] = readerIter.next().getAsArray
+  override val dateIndex: Int = srcHead.indexOf("creationDate")
+  val idIndex = srcHead.indexOf("id")
+  val labelIndex = idIndex + 1
   val label = LDBCTransformer.getNodeLabelFromFileName(file.getName)
   val labelSerialNum = MetaData.getLabelSerialNum(label)
   val service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
-  var innerCount: Long = 0L
-
   override val notifyProgress: Runnable = new Runnable {
     override def run(): Unit = {
-      LDBCTransformer.globalNodeCount.addAndGet(innerCount)
+      LDBCTransformer.globalNodeCount.addAndGet(innerBatchCount)
+      innerCount += innerBatchCount
+      innerBatchCount = 0
     }
   }
 
@@ -33,10 +39,11 @@ class NodeFileHandler(file: File) extends FileHandler {
 
     service.scheduleAtFixedRate(notifyProgress, 0, 1, TimeUnit.SECONDS)
     readerIter.foreach(csvLine => {
+      transferDate(csvLine)
       transferId(csvLine)
-      insertLabelOrType(csvLine, idIndex, label)
+      insertLabelOrType(csvLine, labelIndex, label)
       csvWriter.write(csvLine.getAsString)
-      innerCount += 1
+      innerBatchCount += 1
     })
     csvWriter.close
     notifyProgress.run()

@@ -1,3 +1,5 @@
+package fun.airzihao.ldbc
+
 import java.io.File
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
@@ -9,27 +11,30 @@ import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
  */
 class RelationFileHandler(file: File) extends FileHandler {
   override val srcCSVFile: File = file
-  override val targetCSVFile: File = LDBCTransformer.getOutputFileBySrcName(srcCSVFile.getName)
+  override val targetCSVFile: File = LDBCTransformer.getOutputFileBySrcName(srcCSVFile.getName, LDBCTransformer.targetRelDir)
   override val csvReader: CSVReader = new CSVReader(srcCSVFile)
   override val readerIter: Iterator[CSVLine] = csvReader.getAsCSVLines
   override val csvWriter: CSVWriter = new CSVWriter(targetCSVFile)
 
-  val headline = readerIter.next().getAsArray
+  val srcHead = readerIter.next().getAsArray
   val service: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
+  override val dateIndex: Int = srcHead.indexOf("creationDate")
   val relType: String = LDBCTransformer.getTypeFromRelationFileName(srcCSVFile.getName)
   val fromLabel: String = LDBCTransformer.getFromToLabelsFromFileName(srcCSVFile.getName)._1
   val toLabel: String = LDBCTransformer.getFromToLabelsFromFileName(srcCSVFile.getName)._2
-  val fromLabelIndex: Int = headline.indexWhere(item => item.toLowerCase.contains("id"))
-  val toLabelIndex = headline.indexWhere(item => item.toLowerCase.contains("id"), fromLabelIndex + 1)
+  val fromLabelIndex: Int = srcHead.indexWhere(item => item.toLowerCase.contains("id"))
+  val toLabelIndex = srcHead.indexWhere(item => item.toLowerCase.contains("id"), fromLabelIndex + 1)
   val fromLabelSerialNum: Int = MetaData.getLabelSerialNum(fromLabel)
   val toLabelSerialNum: Int = MetaData.getLabelSerialNum(toLabel)
 
-  var innerCount: Long = 0L
+
 
   override val notifyProgress: Runnable = new Runnable {
     override def run(): Unit = {
-      LDBCTransformer.globlaRelCount.addAndGet(innerCount)
+      LDBCTransformer.globlaRelCount.addAndGet(innerBatchCount)
+      innerCount += innerBatchCount
+      innerBatchCount = 0
     }
   }
 
@@ -40,11 +45,12 @@ class RelationFileHandler(file: File) extends FileHandler {
 
     service.scheduleAtFixedRate(notifyProgress, 0, 5, TimeUnit.SECONDS)
     readerIter.foreach(csvLine => {
+      transferDate(csvLine)
       transferId(csvLine)
       insertLabelOrType(csvLine, 0, relType)
       insertRelId(csvLine, 0 ,MetaData.getRelId)
       csvWriter.write(csvLine.getAsString)
-      innerCount += 1
+      innerBatchCount += 1
     })
     csvWriter.close
     notifyProgress.run()
