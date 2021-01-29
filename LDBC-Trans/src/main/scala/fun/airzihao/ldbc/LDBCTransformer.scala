@@ -25,15 +25,15 @@ object LDBCTransformer {
 
   val spliter: String = "\\|"
 
-  def mergePersonCsv: Unit = {
-    val personFile = new File(s"$srcDynamicDir/person_0_0.csv")
-    val emailFile = new File(s"$srcDynamicDir/person_email_emailaddress_0_0.csv")
-    val languageFile = new File(s"$srcDynamicDir/person_speaks_language_0_0.csv")
-    val tempPersonFile = new File(s"$srcDynamicDir/person-output.csv")
-    val merger = new Merger(personFile, emailFile, languageFile, tempPersonFile)
-    merger.merge()
-    merger.close
-  }
+//  def mergePersonCsv: Unit = {
+//    val personFile = new File(s"$srcDynamicDir/person_0_0.csv")
+//    val emailFile = new File(s"$srcDynamicDir/person_email_emailaddress_0_0.csv")
+//    val languageFile = new File(s"$srcDynamicDir/person_speaks_language_0_0.csv")
+//    val tempPersonFile = new File(s"$srcDynamicDir/person-output.csv")
+//    val merger = new Merger(personFile, emailFile, languageFile, tempPersonFile)
+//    merger.merge()
+//    merger.close
+//  }
 
   def isNodeFile(name: String): Boolean = {
     name.split("_").length == 3
@@ -78,7 +78,7 @@ object LDBCTransformer {
     targetDir = new File(args(1))
     srcDynamicDir = new File(s"$srcDir/dynamic")
     srcStaticDir = new File(s"$srcDir/static")
-    targetDir = new File(args(1))
+//    targetDir = new File(args(1))
     targetNodeDir = new File(s"$targetDir/nodes")
     targetRelDir = new File(s"$targetDir/relations")
     targetDir.mkdirs()
@@ -99,8 +99,8 @@ object LDBCTransformer {
     val loggerService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     loggerService.scheduleAtFixedRate(progressPrinter, 0, 10, TimeUnit.SECONDS)
 
-    mergePersonCsv
-    println(s"person file merged.")
+//    mergePersonCsv
+//    println(s"person file merged.")
 
     val nodeTasks: Set[Future[Unit]] = nodeFilesSet.map(file => Future {
       new NodeFileHandler(file).handle()
