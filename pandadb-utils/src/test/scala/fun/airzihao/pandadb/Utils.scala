@@ -15,7 +15,7 @@ object Utils {
     t
   }
 
-  def timingByMicroSec[T](f: => T): T = {
+  def timingByUSec[T](f: => T): T = {
     val t1 = System.nanoTime()
     val t = f
     val t2 = System.nanoTime()

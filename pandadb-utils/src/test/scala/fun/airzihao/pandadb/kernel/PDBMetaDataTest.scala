@@ -2,7 +2,7 @@ package fun.airzihao.pandadb.kernel
 
 import java.io.File
 
-import fun.airzihao.pandadb.Utils.timingByMicroSec
+import fun.airzihao.pandadb.Utils.timingByUSec
 import org.junit.{Assert, Before, Test}
 
 /**
@@ -50,11 +50,11 @@ class PDBMetaDataTest {
   @Test
   def test9(): Unit = {
     PDBMetaData.availabelIndexId
-    timingByMicroSec(PDBMetaData.availableNodeId)
-    timingByMicroSec(PDBMetaData.availableRelId)
-    timingByMicroSec(PDBMetaData.availabelIndexId)
-    timingByMicroSec(PDBMetaData.getPropId("alice"))
-    timingByMicroSec(PDBMetaData.getPropId("alice"))
+    timingByUSec(PDBMetaData.availableNodeId)
+    timingByUSec(PDBMetaData.availableRelId)
+    timingByUSec(PDBMetaData.availabelIndexId)
+    timingByUSec(PDBMetaData.getPropId("alice"))
+    timingByUSec(PDBMetaData.getPropId("alice"))
   }
 
 }
