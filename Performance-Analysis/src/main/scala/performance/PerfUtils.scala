@@ -22,6 +22,7 @@ class PerfUtils(file: File, objLength: Int) {
 
   def traverseFile = {
     val fis: FileInputStream = new FileInputStream(file)
+    val bis: BufferedInputStream = new BufferedInputStream(fis, 1024*1024)
     val channel: FileChannel = fis.getChannel
     val channelSize: Long = channel.size()
     var i: Long = 0L
@@ -33,7 +34,7 @@ class PerfUtils(file: File, objLength: Int) {
     var readedLength: Long  = 0L
     while (readedLength < channelSize) {
       val bytes: Array[Byte] = new Array[Byte](objLength)
-      fis.read(bytes)
+      bis.read(bytes)
       readedLength += objLength
       i+=1
     }
@@ -43,6 +44,7 @@ class PerfUtils(file: File, objLength: Int) {
 
   def traverseFileWithDeserialize = {
     val fis: FileInputStream = new FileInputStream(file)
+    val bis: BufferedInputStream = new BufferedInputStream(fis, 1024*1024)
     val channel: FileChannel = fis.getChannel
     val channelSize: Long = channel.size()
     var i: Long = 0L
@@ -55,7 +57,7 @@ class PerfUtils(file: File, objLength: Int) {
     var readedLength: Long = 0L
     while (readedLength < channelSize) {
       val bytes: Array[Byte] = new Array[Byte](objLength)
-      fis.read(bytes,0,objLength)
+      bis.read(bytes,0,objLength)
       serializer.deserialize(bytes)
       readedLength += objLength
       i += 1

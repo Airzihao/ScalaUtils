@@ -11,6 +11,8 @@
     <modules>
         <module>pandadb-utils</module>
         <module>LDBC-Trans</module>
+        <module>system-utils</module>
+        <module>Performance-Analysis</module>
     </modules>
 
     <dependencies>

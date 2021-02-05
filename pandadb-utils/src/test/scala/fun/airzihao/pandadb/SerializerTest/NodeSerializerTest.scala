@@ -1,6 +1,5 @@
 package fun.airzihao.pandadb.SerializerTest
 
-
 import cn.pandadb.kernel.util.serializer.{ChillSerializer, NodeSerializer}
 import org.junit.{Assert, Test}
 import fun.airzihao.pandadb.Utils.{timing, timingByUSec}
@@ -23,6 +22,7 @@ class NodeSerializerTest {
     println("serialize")
     timing(for (i<-1 to 10000000) nodeSerializer.serialize(nodeValue))
   }
+
   @Test
   def deSerializePERF(): Unit = {
     println("deserialize")
@@ -33,7 +33,6 @@ class NodeSerializerTest {
     timingByUSec(ChillSerializer.deserialize(bytesArr1, classOf[StoredNodeWithProperty]))
     val node = nodeSerializer.deserializeNodeValue(bytesArr)
     println(node.properties)
-
   }
 
   @Test
